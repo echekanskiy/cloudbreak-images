@@ -17,8 +17,9 @@ export OS_TYPE=redhat7
 export TAG=centos-76
 export DIR=centos7.6
 export PARCELS_ROOT=/opt/cloudera/parcels
-export PRE_WARM_PARCELS='[["CFM-1.1.0.0", "CFM-1.1.0.0-el7.parcel","http://s3.amazonaws.com/dev.hortonworks.com/CFM/centos7/1.x/BUILDS/1.1.0.0-34/tars/parcel"]]'
+export PRE_WARM_PARCELS='[["CFM-1.1.0.0-el7.parcel","http://s3.amazonaws.com/dev.hortonworks.com/CFM/centos7/1.x/BUILDS/1.1.0.0-34/tars/parcel"]]'
+export PRE_WARM_CSD='["http://s3.amazonaws.com/dev.hortonworks.com/CFM/centos7/1.x/BUILDS/1.1.0.0-34/tars/parcel/NIFICA-1.9.0.1.1.0.0-34.jar","http://s3.amazonaws.com/dev.hortonworks.com/CFM/centos7/1.x/BUILDS/1.1.0.0-34/tars/parcel/NIFI-1.9.0.1.1.0.0-34.jar", "http://s3.amazonaws.com/dev.hortonworks.com/CFM/centos7/1.x/BUILDS/1.1.0.0-34/tars/parcel/NIFIREGISTRY-0.3.0.1.1.0.0-34.jar"]'
 
 DOCKER_ENVS="PARCELS_NAME=${PARCELS_NAME} STACK_REPOSITORY_VERSION=${STACK_REPOSITORY_VERSION} STACK_TYPE=${STACK_TYPE} CLUSTERMANAGER_VERSION=${CLUSTERMANAGER_VERSION} CLUSTERMANAGER_BASEURL=${CLUSTERMANAGER_BASEURL} CLUSTERMANAGER_GPGKEY=${CLUSTERMANAGER_GPGKEY} OS=${OS} OS_TYPE=${OS_TYPE} SALT_VERSION=${SALT_VERSION} SALT_PATH=${SALT_PATH} PYZMQ_VERSION=${PYZMQ_VERSION} PYTHON_APT_VERSION=${PYTHON_APT_VERSION} TRACE=1"
 DOCKER_BUILD_ARGS=$(echo ${DOCKER_ENVS} | xargs -n 1 echo "--build-arg " | xargs)
-docker build --build-arg PRE_WARM_PARCELS="${PRE_WARM_PARCELS}" ${DOCKER_BUILD_ARGS} -t registry.eng.hortonworks.com/cloudbreak/${TAG}:$(date +%Y-%m-%d) -f docker/${DIR}/Dockerfile . | tee build.log
+docker build --build-arg PRE_WARM_PARCELS="${PRE_WARM_PARCELS}" --build-arg PRE_WARM_CSD="${PRE_WARM_CSD}" ${DOCKER_BUILD_ARGS} -t registry.eng.hortonworks.com/cloudbreak/${TAG}:$(date +%Y-%m-%d) -f docker/${DIR}/Dockerfile . | tee build.log

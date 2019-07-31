@@ -8,9 +8,11 @@ ARG TRACE
 ARG OS
 ARG OS_TYPE
 ARG PRE_WARM_PARCELS
+ARG PRE_WARM_CSD
 
 ENV SYSTEMCTL_REPLACEMENT=https://raw.githubusercontent.com/hortonworks/docker-systemctl-replacement/3a885817b377f0307bd03d82323fa5749136de8f/files/docker/systemctl.py
 ENV PRE_WARM_PARCELS=${PRE_WARM_PARCELS}
+ENV PRE_WARM_CSD=${PRE_WARM_CSD}
 
 #################################################################################
 # Install Cloudbreak dependencies
