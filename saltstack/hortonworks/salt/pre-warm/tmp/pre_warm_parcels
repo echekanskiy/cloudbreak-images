@@ -1,0 +1,90 @@
+#!/usr/bin/env python2
+
+import os
+import json
+import errno
+import subprocess
+
+PRE_WARM_PARCELS = json.loads(os.environ.get("PRE_WARM_PARCELS", "[]"))
+PARCELS_ROOT = os.environ.get("PARCELS_ROOT", "/opt/cloudera/parcels")
+
+MAKE_USER = True
+PARCEL_REPO = "/opt/cloudera/parcel-repo"
+PARCEL_CACHE = "/opt/cloudera/parcel-cache"
+
+
+# MAKE_USER = False
+# PARCEL_REPO = "/home/workstation/dev/cloudera/cloudbreak-images/test-repo"
+# PARCEL_CACHE = "/home/workstation/dev/cloudera/cloudbreak-images/test-cache"
+
+
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:  # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
+
+
+def download(source, dest):
+    cmd = "curl -C - -s -S --create-dirs {0} -o {1}".format(source, dest)
+    if os.path.isfile(dest):
+        try:
+            subprocess.check_call(cmd, shell=True)
+        except subprocess.CalledProcessError:
+            os.unlink(dest)
+            subprocess.check_call(cmd, shell=True)
+    else:
+        subprocess.check_call(cmd, shell=True)
+
+
+def normalize_url(url):
+    if url.endswith("/"):
+        return url[:-1]
+    else:
+        return url
+
+
+def download_parcel_checksum(url, dest):
+    for ext in (".sha", ".sha1", ".sha256"):
+        try:
+            download(url + ext, dest + ".sha")
+            print "Downloaded checksum file:", url + ext
+            return ext
+        except:
+            pass
+    raise Exception("failed to download parcel sha file")
+
+
+def place_parcel(parcel_path, parcel_product):
+    cmd = 'tar zxf "{0}" -C "{1}"'.format(parcel_path, PARCELS_ROOT)
+    subprocess.check_call(cmd, shell=True)
+    parcel_name = parcel_product.split("-")[0]
+    parcel_root = os.path.join(PARCELS_ROOT, parcel_name)
+    product_root = os.path.join(PARCELS_ROOT, parcel_product)
+    ln_cmd = 'ln -s {0} {1}'.format(product_root, parcel_root)
+    subprocess.check_call(ln_cmd, shell=True)
+    open(os.path.join(PARCELS_ROOT, parcel_product, ".dont_delete"), "w").close()
+
+
+if PRE_WARM_PARCELS:
+    print "PRE-WARMING parcels:", PRE_WARM_PARCELS
+    # ensure cloudera user and folders is here
+    if MAKE_USER:
+        os.system("id -u cloudera-scm &>/dev/null || useradd -r cloudera-scm")
+    mkdir_p(PARCEL_REPO)
+    mkdir_p(PARCEL_CACHE)
+    mkdir_p(PARCELS_ROOT)
+    for product_name, parcel_file_name, parcel_repository in PRE_WARM_PARCELS:
+        parcel_url = normalize_url(parcel_repository) + "/" + parcel_file_name
+        parcel_dest = os.path.join(PARCEL_REPO, parcel_file_name)
+        print "Downloading parcel {0}, please wait ...".format(parcel_url)
+        download(parcel_url, parcel_dest)
+        print "Downloaded parcel:", parcel_url
+        download_parcel_checksum(parcel_url, parcel_dest)
+        # TODO call checksum here
+        place_parcel(parcel_dest, product_name)
+        subprocess.check_call("chown -R cloudera-scm:cloudera-scm /opt/cloudera", shell=True)
+        subprocess.check_call("sync", shell=True)

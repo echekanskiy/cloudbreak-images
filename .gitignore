@@ -16,3 +16,6 @@ build.sh
 .*
 !.dockerignore
 packer_no_pp.json
+test-cache
+test-repo
+test-root
