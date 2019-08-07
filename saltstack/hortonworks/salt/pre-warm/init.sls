@@ -6,7 +6,7 @@ include:
     {% if pillar['STACK_VERSION'] and  pillar['STACK_BASEURL'] and  pillar['STACK_REPOID'] %}
   - {{ slspath }}.cdh
     {% endif %}
-    {% if 'STREAMS_MESSAGING_MANAGER' in pillar['PRE_WARM_CSD'] %}
+    {% if pillar['PRE_WARM_CSD'] and 'STREAMS_MESSAGING_MANAGER' in pillar['PRE_WARM_CSD'] %}
   - {{ slspath }}.node
     {% endif %}
   - {{ slspath }}.parcels
